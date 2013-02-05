@@ -5,7 +5,7 @@ using namespace std;
 class Robot
 {
 public:
-Robot(const M, const int N, const int curr_x, const int curr_y, const char curr_dir):x(curr_x),y(curr_y),dir(curr_dir)
+Robot(const int curr_M, const int curr_N, const int curr_x, const int curr_y, const char curr_dir):M(curr_M), N(curr_N), x(curr_x),y(curr_y),dir(curr_dir)
 {
 }
 void command(char cmd);
@@ -15,19 +15,22 @@ cout<<"current direction is "<<dir<<endl;
 }
 void print_current_position()
 {
-cout<<"current position of robot is ("<<x<<", "<<y")"<<endl;
+cout<<"current position of robot is ("<<x<<", "<<y<<")"<<endl;
 }
 private:
 void increment_x();
-void incremnet_y();
+void increment_y();
 void decrement_x();
 void decrement_y();
 void left();
 void right();
 void move();
-char dir;
+
+int M;
+int N;
 int x;
 int y;
+char dir;
 };
 
 void Robot::command(char cmd)
@@ -107,7 +110,7 @@ else if(dir == 'S')
 {
 decrement_y();
 }
-
+}
 void Robot::increment_x()
 {
 if((x + 1) < M)
@@ -123,17 +126,27 @@ if((y + 1) < N)
 y++;
 }
 }
-void Robot::derement_x()
+void Robot::decrement_x()
 {
 if((x - 1) >= 0)
 {
 x--;
 }
 }
-void Robot::derement_y()
+void Robot::decrement_y()
 {
 if((y - 1) >= 0)
 {
 y--;
 }
+}
+
+int main()
+{
+    Robot r(5,5,2,2,'E');
+    r.command('L');
+    r.command('M');
+    r.print_current_position();
+    r.print_current_direction();
+    return 0;
 }
