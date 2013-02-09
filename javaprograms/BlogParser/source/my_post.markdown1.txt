@@ -1,0 +1,9 @@
+Title: My first post
+Date: 27­01­2013
+Author: Abishek B
+Published: true
+­­
+This is the actual body of the blog post, containing *markdown* _formatting_.
+If you notice, there is a double­hypen (­­) which separates the meta
+information about this blog post from the actual text of the post which you
+are reading right now.
