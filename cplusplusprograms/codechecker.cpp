@@ -1,14 +1,14 @@
 /*
-This code does following :
-1. Fork child process
-2. Drops privilege of child process to normal user, if it was running under root privilege
-3. Sets alarm for child process and terminates it if it exceeds given allowed time limit
-4. Limits data and stack resources (memory) to given Bytes
-5. Makes parent process wait for child process to finish/exit
-6. Compiles the c++ file provided in command line. Publish compilation failures if any
-7. Executes the program if compilation is successful.
-8. Report the results.
-*/
+   This code does following :
+   1. Fork child process
+   2. Drops privilege of child process to normal user, if it was running under root privilege
+   3. Sets alarm for child process and terminates it if it exceeds given allowed time limit
+   4. Limits data and stack resources (memory) to given Bytes
+   5. Makes parent process wait for child process to finish/exit
+   6. Compiles the c++ file provided in command line. Publish compilation failures if any
+   7. Executes the program if compilation is successful.
+   8. Report the results.
+ */
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -34,7 +34,7 @@ class CodeChecker{
 	public:
 		CodeChecker(string filename):
 			m_filename(filename),
-			m_memory_limit(10000),
+			m_memory_limit(100000),
 			m_execution_time(5){
 			}
 		bool checkcode();
@@ -67,15 +67,7 @@ bool CodeChecker::checkcode()
 	{
 		//its child process
 		//run our program here
-
-		struct rlimit limits;
-		limits.rlim_cur = get_memory_limit(); // set data segment limit in B
-		limits.rlim_max = get_memory_limit(); // make sure the child can't increase it again
-		result = setrlimit(RLIMIT_DATA, &limits);
-		if(result != 0){exit(EXIT_FAILURE);}
-		result = setrlimit(RLIMIT_STACK, &limits);
-		if(result != 0){exit(EXIT_FAILURE);}
-
+		// install an alarm handler for SIGALRM
 		if (getuid() == 0) { // we are root
 			// setting UID/GID requires root privileges, so if you don't set
 			// the GID first, you won't be able to do it at all.
@@ -101,23 +93,23 @@ bool CodeChecker::checkcode()
 		{
 			cout<<"changed the child process' privilege"<<endl;
 		} 
-		
+
+		signal(SIGALRM, alarm_handler);
+
 		// install an alarm to be fired after TIME_LIMIT
 		alarm(get_execution_time());
-		signal(SIGALRM, alarm_handler);
+		struct rlimit limits;
+		limits.rlim_cur = get_memory_limit(); // set data segment limit in B
+		limits.rlim_max = get_memory_limit(); // make sure the child can't increase it again
+		result = setrlimit(RLIMIT_DATA, &limits);
+		result = setrlimit(RLIMIT_STACK, &limits);
+		if(result != 0){exit(EXIT_FAILURE);}
+
 		cout<<"-- Inside Child Process --"<<endl;
-		result = 0;
-		struct stat buf;
-		if(stat("binary", &buf) == 0)
+		system("rm binary");
+		result = system(string("g++ " + get_filename() + " -o binary 2>&1").c_str());
+		if(result == 0)
 		{
-			system("rm binary");
-		}
-		system(string("g++ " + get_filename() + " -o binary 2>&1").c_str());
-		cout<<"result "<<result<<endl;
-		
-		if(stat("binary", &buf) == 0)
-		{
-			cout<<"Compilation Successful, Running the Program!!"<<endl;
 			result = system(string("./binary 2>&1").c_str());
 		}
 		alarm(0);
@@ -140,7 +132,6 @@ bool CodeChecker::checkcode()
 	else
 	{
 		//parent
-		result = true;
 		cout<<"-- Inside Parent Process --"<<endl;
 		if(getuid() == 0)
 		{
@@ -186,16 +177,16 @@ int main(int argc, char* argv[])
 		std::cerr << "Usage: " << argv[0] << " filename.cpp" << std::endl;
 		return 1;
 	}
-	std:string filename = argv[1];
-    cout<<"----- Starting Program ----- "<<endl;
-    CodeChecker codechecker(filename);
-    if(codechecker.checkcode())
-    {
-	    cout<<"-- Congratulations!! Your programmed passed all the criteria -- "<<endl;
-    }
-    else
-    {
-	    cout<<"-- Your Program Failed to meet All the Criteria -- "<<endl;
-    }
-    return 0;
+	string filename = argv[1];
+	cout<<"----- Starting Program ----- "<<endl;
+	CodeChecker codechecker(filename);
+	if(codechecker.checkcode())
+	{
+		cout<<"-- Congratulations!! Your programmed passed all the criteria -- "<<endl;
+	}
+	else
+	{
+		cout<<"-- Your Program Failed to meet All the Criteria -- "<<endl;
+	}
+	return 0;
 }
